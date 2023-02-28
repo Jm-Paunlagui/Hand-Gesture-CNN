@@ -60,6 +60,8 @@ def put_text_in_textbox_event():
     else:
         # Put the text in the combined_text textbox in the text box
         app.combined_text.insert(customtkinter.END, app.text_box.get("1.0", "end-1c") + " ")
+        # Clear the text box
+        clear_textbox_event()
 
 
 class App(customtkinter.CTk):
@@ -138,9 +140,13 @@ class App(customtkinter.CTk):
         ret, img = self.camera.read()
         cv2.rectangle(img, (100, 100), (600, 600), (255, 0, 0), 2)
         cropped = img[100:600, 100:600]
-        resized = (cv2.cvtColor(cv2.resize(cropped, (28, 28)), cv2.COLOR_BGR2RGBA)) / 255.0
-        data = resized.reshape(-1, 28, 28, 3)
-        model_out = model.predict([data])[0]
+        resized = cv2.resize(cropped, (28, 28))
+        resized = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+        resized = np.expand_dims(resized, axis=-1)
+        resized = resized / 255.0
+        data = np.expand_dims(resized, axis=0)
+        data = np.repeat(data, 3, axis=-1)
+        model_out = model.predict(data)[0]
         label = np.argmax(model_out)
 
         if max(model_out) > 0.9:
@@ -194,11 +200,15 @@ class App(customtkinter.CTk):
                 letter = "Y"
 
             print(letter)
+            # insert letter into text box
+            self.text_box.insert(customtkinter.END, letter)
 
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGBA)
-        h, w = img.shape[:3]
-        image = customtkinter.CTkImage.fromarray(img)
-        self.camera_canvas.create_image(w / 2, h / 2, image=image)
+        h, w = img.shape[:2]
+        image = Image.fromarray(img)
+        photo = ImageTk.PhotoImage(image=image)
+        self.camera_canvas.create_image(w / 2, h / 2, image=photo)
+        self.camera_canvas.photo = photo
 
         self.after(10, self.update_camera)
 
