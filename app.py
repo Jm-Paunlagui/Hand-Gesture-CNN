@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk
 from keras.saving.save import load_model
+from tensorflow_hub import KerasLayer
 
 customtkinter.set_appearance_mode("Light")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"]
@@ -101,7 +102,7 @@ class App(customtkinter.CTk):
                                                       width=640
                                                       )
         self.combined_text.grid(row=0, column=1, sticky=customtkinter.NSEW)
-        self.text_box.insert(customtkinter.END, "Hello World")
+        self.text_box.insert(customtkinter.END, "")
 
         self.clear_button = customtkinter.CTkButton(self.left_side_bar_frame, text="Clear", corner_radius=4,
                                                     text_color="white", command=clear_textbox_event)
@@ -136,11 +137,12 @@ class App(customtkinter.CTk):
 
     def update_camera(self):
         global letter
-        model = load_model("model.h5")
+        custom_objects = {'KerasLayer': KerasLayer}
+        model = load_model("modeltole.h5", custom_objects=custom_objects)
         ret, img = self.camera.read()
         cv2.rectangle(img, (100, 100), (600, 600), (255, 0, 0), 2)
         cropped = img[100:600, 100:600]
-        resized = cv2.resize(cropped, (28, 28))
+        resized = cv2.resize(cropped, (224, 224))
         resized = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
         resized = np.expand_dims(resized, axis=-1)
         resized = resized / 255.0
@@ -159,45 +161,51 @@ class App(customtkinter.CTk):
             elif label == 3:
                 letter = "D"
             elif label == 4:
-                letter = "E"
+                letter = ""
             elif label == 5:
-                letter = "F"
+                letter = "E"
             elif label == 6:
-                letter = "G"
+                letter = "F"
             elif label == 7:
-                letter = "H"
+                letter = "G"
             elif label == 8:
-                letter = "I"
+                letter = "H"
             elif label == 10:
-                letter = "K"
+                letter = "I"
             elif label == 11:
-                letter = "L"
+                letter = "J"
             elif label == 12:
-                letter = "M"
+                letter = "K"
             elif label == 13:
-                letter = "N"
+                letter = "L"
             elif label == 14:
-                letter = "O"
+                letter = "M"
             elif label == 15:
-                letter = "P"
+                letter = "N"
             elif label == 16:
-                letter = "Q"
+                letter = ""
             elif label == 17:
-                letter = "R"
+                letter = "O"
             elif label == 18:
-                letter = "S"
+                letter = "P"
             elif label == 19:
-                letter = "T"
+                letter = "Q"
             elif label == 20:
-                letter = "U"
+                letter = "R"
             elif label == 21:
-                letter = "V"
+                letter = "S"
             elif label == 22:
-                letter = "W"
+                letter = " "
             elif label == 23:
-                letter = "X"
+                letter = "T"
             elif label == 24:
+                letter = "W"
+            elif label == 25:
+                letter = "X"
+            elif label == 26:
                 letter = "Y"
+            elif label == 27:
+                letter = "Z"
 
             print(letter)
             # insert letter into text box

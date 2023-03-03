@@ -1,31 +1,62 @@
-from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, BatchNormalization, MaxPool2D
+# import required libraries
+import tensorflow as tf
+import tensorflow_hub as hub
+from keras import layers, models
 from keras.preprocessing.image import ImageDataGenerator
+from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, BatchNormalization
 from keras.models import Sequential
+from keras.optimizers import Adam
+
+# set seed for reproducibility
+tf.random.set_seed(42)
 
 # Image generator with augmentation
-train_datagen = ImageDataGenerator(rescale=1. / 255, rotation_range=40, width_shift_range=0.2, height_shift_range=0.2,
-                                   shear_range=0.2, zoom_range=0.2, horizontal_flip=True, fill_mode='nearest')
+train_datagen = ImageDataGenerator(rescale=1./255, 
+                                   rotation_range=20, 
+                                   width_shift_range=0.2, 
+                                   height_shift_range=0.2,
+                                   shear_range=0.2, 
+                                   zoom_range=0.2, 
+                                   horizontal_flip=True)
 
-training_set = train_datagen.flow_from_directory('dataset', target_size=(28, 28), batch_size=64, class_mode='binary')
+# create train set generator
+training_set = train_datagen.flow_from_directory('dataset/train',
+                                                 target_size=(224, 224),
+                                                 batch_size=64, 
+                                                 class_mode='categorical')
+
+# create validation set generator
+val_datagen = ImageDataGenerator(rescale=1./255)
+
+validation_set = val_datagen.flow_from_directory('dataset/validation', 
+                                                  target_size=(224, 224),
+                                                  batch_size=64, 
+                                                  class_mode='categorical')
+
+URL = "https://tfhub.dev/google/tf2-preview/inception_v3/feature_vector/4"
+feature_extractor = hub.KerasLayer(URL,
+                                   input_shape=(224, 224, 3))
+
+feature_extractor.trainable = False
 
 model = Sequential([
-    Conv2D(128, kernel_size=(5, 5), strides=1, padding='same', activation='relu', input_shape=(28, 28, 3)),
-    MaxPool2D(pool_size=(3, 3), strides=2, padding='same'),
-    Conv2D(64, kernel_size=(2, 2), strides=1, activation='relu', padding='same'),
-    MaxPool2D((2, 2), 2, padding='same'),
-    Conv2D(32, kernel_size=(2, 2), strides=1, activation='relu', padding='same'),
-    MaxPool2D((2, 2), 2, padding='same'),
-
-    Flatten(),
-    Dense(units=512, activation='relu'),
-    Dropout(rate=0.25),
-    Dense(29, activation='softmax')
+    feature_extractor,
+    layers.Dense(29)
 ])
 
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
+# compile the model
+model.compile(optimizer=Adam(lr=0.0001), 
+              loss='categorical_crossentropy', 
+              metrics=['accuracy'])
+
+# print model summary
 model.summary()
-model.fit(training_set, epochs=35)
 
-# Save the model
-model.save('model.h5')
+# train the model
+history = model.fit(training_set, 
+                    epochs=10,
+                    validation_data=validation_set)
+
+# save the model
+model.save('modeltole.h5')
