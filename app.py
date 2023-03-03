@@ -6,7 +6,8 @@ import customtkinter
 import cv2
 import numpy as np
 from PIL import Image, ImageTk
-from keras.saving.save import load_model
+from tensorflow.python.keras.models import load_model
+from tensorflow_hub import KerasLayer
 
 customtkinter.set_appearance_mode("Light")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"]
@@ -136,7 +137,7 @@ class App(customtkinter.CTk):
 
     def update_camera(self):
         global letter
-        model = load_model("model.h5")
+        model = load_model("modeltole.h5", custom_objects={"KerasLayer": KerasLayer})
         ret, img = self.camera.read()
         cv2.rectangle(img, (100, 100), (600, 600), (255, 0, 0), 2)
         cropped = img[100:600, 100:600]
